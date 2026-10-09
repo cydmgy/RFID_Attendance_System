@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Attendance Monitoring System</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
+    .badge-status-present { background-color: #198754; color: #fff; }
+    .badge-status-late { background-color: #ffc107; color: #000; }
+    .badge-status-absent { background-color: #dc3545; color: #fff; }
+    .badge-status-excused { background-color: #0dcaf0; color: #000; }
+    .badge-status-unknown { background-color: #6c757d; color: #fff; }
+    
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- 1. LOGIN SCREEN                                              -->
+  <!-- ============================================================ -->
+  <div id="screen-login" class="min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="card shadow-lg border-0 rounded-4" style="max-width: 480px; width: 92%;">
+      <div class="card-body p-4 p-sm-5 text-center">
+        
+        <div class="mb-3 d-inline-flex p-3 bg-primary bg-opacity-10 text-primary rounded-circle">
+          <i class="fas fa-microchip fs-1"></i>
+        </div>
+        <h3 class="fw-bold text-dark mb-1">IoT Attendance System</h3>
+        <p class="text-muted small mb-4">Door-mounted RFID Gateway &amp; Supabase Analytics</p>
+        
+        <div class="alert alert-success py-2 small d-flex align-items-center justify-content-center gap-2 mb-4">
+          <i class="fas fa-check-circle"></i> Backend &amp; Supabase Database Online
+        </div>
+
+        <p class="text-secondary small fw-semibold text-uppercase tracking-wider mb-3">Choose Your Portal to Log In</p>
+
+        <div class="d-grid gap-3">
+          <button class="btn btn-outline-primary p-3 text-start d-flex align-items-center justify-content-between rounded-3" onclick="loginAs('student')">
+            <div class="d-flex align-items-center gap-3">
+              <span class="fs-3">👨‍🎓</span>
+              <div>
+                <strong class="d-block text-dark">Student Portal</strong>
+                <small class="text-muted">Clyde Magnaye (ID: 2024-00101)</small>
+              </div>
+            </div>
+            <i class="fas fa-arrow-right text-primary"></i>
+          </button>
+
+          <button class="btn btn-outline-warning p-3 text-start d-flex align-items-center justify-content-between rounded-3" onclick="loginAs('instructor')">
+            <div class="d-flex align-items-center gap-3">
+              <span class="fs-3">👨‍🏫</span>
+              <div>
+                <strong class="d-block text-dark">Instructor Portal</strong>
+                <small class="text-muted">Faculty &amp; Attendance Analytics</small>
+              </div>
+            </div>
+            <i class="fas fa-arrow-right text-warning"></i>
+          </button>
+
+          <button class="btn btn-outline-dark p-3 text-start d-flex align-items-center justify-content-between rounded-3" onclick="loginAs('admin')">
+            <div class="d-flex align-items-center gap-3">
+              <span class="fs-3">🛡️</span>
+              <div>
+                <strong class="d-block text-dark">Administrator Portal</strong>
+                <small class="text-muted">Hardware Scanner &amp; Student Enrollment</small>
+              </div>
+            </div>
+            <i class="fas fa-arrow-right text-dark"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 2. STUDENT PORTAL                                            -->
+  <!-- ============================================================ -->
+  <div id="screen-student" class="d-none min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top shadow-sm">
+      <div class="container-fluid px-4">
+        <a class="navbar-brand fw-bold" href="#" onclick="showStudentTab('overview')">
+          <i class="fas fa-graduation-cap me-2"></i>Student Portal
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-student">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav-student">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" id="tablink-std-overview" href="#" onclick="showStudentTab('overview')">
+                <i class="fas fa-gauge-high me-1"></i> Overview
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tablink-std-logs" href="#" onclick="showStudentTab('logs')">
+                <i class="fas fa-history me-1"></i> My Attendance History
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tablink-std-leave" href="#" onclick="showStudentTab('leave')">
+                <i class="fas fa-file-pen me-1"></i> File Excuse / Leave
+              </a>
+            </li>
+          </ul>
+          <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-white text-success px-3 py-2 fw-semibold" id="student-nav-name">
+              Clyde Magnaye (3A)
+            </span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">
+              <i class="fas fa-arrow-right-from-bracket me-1"></i> Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      <div id="student-alert-box"></div>
+
+      <!-- Student Tab: Overview -->
+      <div id="std-tab-overview">
+        <!-- KPI Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Total Days Recorded</span>
+                <h3 class="fw-bold mb-0 text-primary" id="std-stat-total">0</h3>
+                <small class="text-muted">Total check-ins</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Present Scans</span>
+                <h3 class="fw-bold mb-0 text-success" id="std-stat-present">0</h3>
+                <small class="text-muted">On-time taps</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Absences / Excuses</span>
+                <!-- QoL feature: Absent count for Student dashboard -->
+                <h3 class="fw-bold mb-0 text-danger" id="std-stat-absent">0</h3>
+                <small class="text-danger fw-semibold">Recorded absences</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Attendance Rate</span>
+                <h3 class="fw-bold mb-0 text-info" id="std-stat-rate">100%</h3>
+                <small class="text-muted">Class presence</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Profile Card -->
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          <div class="card-header bg-white py-3 fw-bold">
+            <i class="fas fa-id-card text-success me-2"></i>My Registered Student Information
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-6 mb-2">
+                <span class="text-muted small d-block">Full Name:</span>
+                <strong class="fs-5" id="std-card-name">Clyde Magnaye</strong>
+              </div>
+              <div class="col-sm-6 mb-2">
+                <span class="text-muted small d-block">Student ID No:</span>
+                <code class="fs-6" id="std-card-id">2024-00101</code>
+              </div>
+              <div class="col-sm-6 mb-2">
+                <span class="text-muted small d-block">Course &amp; Section:</span>
+                <span id="std-card-course">BS Information Technology - Year 3 (3A)</span>
+              </div>
+              <div class="col-sm-6 mb-2">
+                <span class="text-muted small d-block">Assigned RFID Card UID:</span>
+                <span class="badge bg-dark font-monospace fs-6" id="std-card-rfid">E3:4A:9B:1C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Tab: My Attendance History -->
+      <div id="std-tab-logs" class="d-none">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-history text-success me-2"></i>My Attendance Logs</span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadStudentPortalData()">
+              <i class="fas fa-rotate"></i> Refresh
+            </button>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                  <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Classroom / Room</th>
+                    <th>Attendance Status</th>
+                    <th>RFID UID</th>
+                  </tr>
+                </thead>
+                <tbody id="std-logs-table-body">
+                  <tr><td colspan="4" class="text-center py-4 text-muted">Loading logs...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Tab: File Leave / Excuse Request -->
+      <div id="std-tab-leave" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-header bg-white py-3 fw-bold">
+                <i class="fas fa-file-signature text-warning me-2"></i>File Excuse / Leave Request
+              </div>
+              <div class="card-body">
+                <form id="std-leave-form" onsubmit="submitStudentLeave(event)">
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Subject *</label>
+                    <select id="std-leave-subject" class="form-select form-select-sm" required>
+                      <option value="">Loading subjects...</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Absence Date *</label>
+                    <!-- QoL feature: min attribute prevents past date selection -->
+                    <input type="date" id="std-leave-date" class="form-control form-control-sm" required>
+                    <div class="form-text small text-muted">Absence date cannot be earlier than today.</div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Reason for Absence *</label>
+                    <textarea id="std-leave-reason" class="form-control form-control-sm" rows="3" placeholder="Provide medical reason or official excuse..." required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                    <i class="fas fa-paper-plane me-1"></i> Submit Excuse Request
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-header bg-white py-3 fw-bold">
+                <i class="fas fa-clipboard-list text-primary me-2"></i>My Leave Requests Status
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                      <tr>
+                        <th>Subject</th>
+                        <th>Absence Date</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="std-leaves-status-tbody">
+                      <tr><td colspan="4" class="text-center py-4 text-muted">No requests filed.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. INSTRUCTOR PORTAL                                         -->
+  <!-- ============================================================ -->
+  <div id="screen-instructor" class="d-none min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm no-print">
+      <div class="container-fluid px-4">
+        <a class="navbar-brand fw-bold" href="#" onclick="showInstructorTab('analytics')">
+          <i class="fas fa-chalkboard-user me-2"></i>Instructor Portal
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-inst">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav-inst">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" id="tablink-inst-analytics" href="#" onclick="showInstructorTab('analytics')">
+                <i class="fas fa-chart-pie me-1"></i> Daily Analytics
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tablink-inst-attendance" href="#" onclick="showInstructorTab('attendance')">
+                <i class="fas fa-table-list me-1"></i> Live Attendance &amp; Overrides
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tablink-inst-export" href="#" onclick="showInstructorTab('export')">
+                <i class="fas fa-file-export me-1"></i> Export Attendance Sheet
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tablink-inst-leaves" href="#" onclick="showInstructorTab('leaves')">
+                <i class="fas fa-inbox me-1"></i> Student Leave Requests
+              </a>
+            </li>
+          </ul>
+          <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-white text-primary px-3 py-2 fw-semibold">
+              👨‍🏫 Faculty Member
+            </span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">
+              <i class="fas fa-arrow-right-from-bracket me-1"></i> Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container-fluid px-4 py-4">
+      <div id="instructor-alert-box" class="no-print"></div>
+
+      <!-- Instructor Tab 1: Daily Analytics (QoL feature) -->
+      <div id="inst-tab-analytics">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+          <div>
+            <h4 class="fw-bold mb-1">Classroom Attendance Analytics</h4>
+            <p class="text-muted small mb-0">Overview of student presence, late entries, and absences for the chosen day.</p>
+          </div>
+          <!-- Filter by Day -->
+          <div class="d-flex align-items-center gap-2">
+            <label class="small fw-semibold text-muted" for="inst-analytics-date">Date:</label>
+            <input type="date" id="inst-analytics-date" class="form-control form-control-sm" onchange="loadInstructorAnalytics()">
+            <button class="btn btn-primary btn-sm" onclick="loadInstructorAnalytics()">
+              <i class="fas fa-filter me-1"></i> Filter
+            </button>
+          </div>
+        </div>
+
+        <!-- Big Highlight Ratio Box (e.g. 28/30 Students) -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4 bg-primary text-white p-4">
+          <div class="row align-items-center">
+            <div class="col-md-7">
+              <span class="badge bg-white text-primary text-uppercase px-3 py-2 fw-bold mb-2">Daily Presence Ratio</span>
+              <h1 class="display-5 fw-bold mb-1" id="inst-ratio-text">0 / 0 Students</h1>
+              <p class="mb-0 opacity-75 fs-6" id="inst-ratio-sub">Calculating attendance rate for selected date...</p>
+            </div>
+            <div class="col-md-5 mt-3 mt-md-0">
+              <div class="progress" style="height: 24px; border-radius: 12px; background-color: rgba(255,255,255,0.25);">
+                <div id="inst-ratio-bar" class="progress-bar bg-success fw-bold" role="progressbar" style="width: 0%">0%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="row g-3">
+          <div class="col-lg-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Total Enrolled</span>
+                <h3 class="fw-bold mb-0 text-dark" id="inst-stat-enrolled">0</h3>
+                <small class="text-muted">Total class roster</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Present / On Time</span>
+                <h3 class="fw-bold mb-0 text-success" id="inst-stat-present">0</h3>
+                <small class="text-muted">Scanned on time</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Late</span>
+                <h3 class="fw-bold mb-0 text-warning" id="inst-stat-late">0</h3>
+                <small class="text-muted">After grace period</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-6">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-body">
+                <span class="text-muted small fw-semibold">Absent / Unscanned</span>
+                <h3 class="fw-bold mb-0 text-danger" id="inst-stat-absent">0</h3>
+                <small class="text-muted">Unrecorded or excused</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructor Tab 2: Live Attendance & Manual Overrides -->
+      <div id="inst-tab-attendance" class="d-none">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list-check text-primary me-2"></i>Classroom Attendance Stream</span>
+            <div class="d-flex gap-2">
+              <select id="inst-room-filter" class="form-select form-select-sm" onchange="loadInstructorAttendance()">
+                <option value="">All Rooms</option>
+              </select>
+              <button class="btn btn-outline-primary btn-sm" onclick="loadInstructorAttendance()">
+                <i class="fas fa-rotate"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 540px; overflow-y: auto;">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Room</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="inst-attendance-tbody">
+                  <tr><td colspan="6" class="text-center py-4 text-muted">Loading logs...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructor Tab 3: Export Attendance Sheet (QoL feature) -->
+      <div id="inst-tab-export" class="d-none">
+        <div class="card shadow-sm border-0 rounded-3 mb-4 no-print">
+          <div class="card-header bg-white py-3 fw-bold">
+            <i class="fas fa-file-export text-success me-2"></i>Generate &amp; Export Attendance Sheet
+          </div>
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Attendance Date *</label>
+                <input type="date" id="export-date" class="form-control form-control-sm" onchange="loadExportSheetData()">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Room / Class</label>
+                <select id="export-room" class="form-select form-select-sm" onchange="loadExportSheetData()">
+                  <option value="">All Classrooms</option>
+                </select>
+              </div>
+              <div class="col-md-4 d-flex gap-2">
+                <button class="btn btn-success btn-sm flex-fill fw-bold" onclick="downloadAttendanceCSV()">
+                  <i class="fas fa-file-csv me-1"></i> Download CSV
+                </button>
+                <button class="btn btn-dark btn-sm flex-fill fw-bold" onclick="printAttendanceSheet()">
+                  <i class="fas fa-print me-1"></i> Print Sheet
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Printable Area -->
+        <div id="printable-area" class="card shadow-sm border-0 rounded-3 p-4 bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+            <div>
+              <h4 class="fw-bold mb-0">Official Classroom Attendance Record</h4>
+              <p class="text-muted small mb-0">IoT Attendance Monitoring System — Faculty Report</p>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-secondary mb-1">Generated: <span id="export-sheet-gen-date">-</span></span>
+              <div class="small fw-semibold text-muted">Date: <span id="export-sheet-target-date">-</span></div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0" id="export-table">
+              <thead class="table-light small">
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Student ID</th>
+                  <th>Student Full Name</th>
+                  <th>Course &amp; Section</th>
+                  <th>Room</th>
+                  <th>Status</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="export-sheet-tbody">
+                <tr><td colspan="7" class="text-center py-4 text-muted">Select date above to generate sheet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructor Tab 4: Student Leave Requests Queue -->
+      <div id="inst-tab-leaves" class="d-none">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-inbox text-warning me-2"></i>Pending Excuse / Leave Requests</span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadInstructorLeaves()">
+              <i class="fas fa-rotate"></i> Refresh
+            </button>
+          </div>
+          <div class="card-body p-0">
+            <div id="inst-leaves-list" class="list-group list-group-flush">
+              <div class="p-4 text-center text-muted small">Loading leave requests...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 4. ADMINISTRATOR PORTAL                                      -->
+  <!-- ============================================================ -->
+  <div id="screen-admin" class="d-none min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+      <div class="container-fluid px-4">
+        <a class="navbar-brand fw-bold" href="#" onclick="showAdminTab('scanner')">
+          <i class="fas fa-shield-halved me-2"></i>Admin Portal
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-adm">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav-adm">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" id="tablink-adm-scanner" href="#" onclick="showAdminTab('scanner')">
+                <i class="fas fa-microchip me-1"></i> Virtual RFID Scanner
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tablink-adm-students" href="#" onclick="showAdminTab('students')">
+                <i class="fas fa-users-gear me-1"></i> Student Enrollment
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tablink-adm-logs" href="#" onclick="showAdminTab('logs')">
+                <i class="fas fa-stream me-1"></i> Attendance Stream
+              </a>
+            </li>
+          </ul>
+          <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-secondary px-3 py-2 fw-semibold">
+              🛡️ System Administrator
+            </span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">
+              <i class="fas fa-arrow-right-from-bracket me-1"></i> Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container-fluid px-4 py-4">
+      <div id="admin-alert-box"></div>
+
+      <!-- Admin Tab 1: Virtual Door Scanner Simulator -->
+      <div id="adm-tab-scanner">
+        <div class="row g-4 justify-content-center">
+          <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm border-0 rounded-4">
+              <div class="card-header bg-dark text-white py-3 fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-door-open me-2 text-warning"></i>Door Node Hardware Simulator (ESP32)</span>
+                <span class="badge bg-primary">POST /api/scan</span>
+              </div>
+              <div class="card-body p-4">
+                <p class="text-muted small mb-3">
+                  Simulate RFID card taps before physical hardware is wired. Validates student lookup, schedule matching, and duplicate guard.
+                </p>
+
+                <!-- LCD Simulation Screen -->
+                <div class="p-3 rounded-3 mb-4 bg-dark text-success font-monospace" style="border: 2px solid #198754; min-height: 75px;">
+                  <div id="adm-lcd-1" class="fw-bold fs-6">Ready to Scan...</div>
+                  <div id="adm-lcd-2" class="small opacity-75">Please tap card</div>
+                </div>
+
+                <form id="adm-sim-form" onsubmit="handleAdminSimScan(event)">
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Classroom Door Node</label>
+                    <select id="adm-sim-room" class="form-select form-select-sm" required>
+                      <option value="">Loading rooms...</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Quick-Select Registered Student</label>
+                    <select id="adm-sim-student-quick" class="form-select form-select-sm" onchange="onAdminQuickStudent(this.value)">
+                      <option value="">-- Choose student or type custom UID --</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">RFID Card UID (Hex) *</label>
+                    <input type="text" id="adm-sim-uid" class="form-control form-control-sm font-monospace" placeholder="e.g. E3:4A:9B:1C" required>
+                  </div>
+                  <button type="submit" id="adm-sim-btn" class="btn btn-primary w-100 fw-bold">
+                    <i class="fas fa-wifi me-1"></i> Simulate RFID Tap
+                  </button>
+                </form>
+                <div class="mt-2 text-muted small text-center">
+                  <i class="fas fa-shield-halved text-success me-1"></i>Duplicate guard active (5 min cutoff).
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Tab 2: Student Enrollment -->
+      <div id="adm-tab-students" class="d-none">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-user-plus text-primary me-2"></i>Enroll Student &amp; Assign RFID</span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="seedSampleStudents()">
+                  <i class="fas fa-magic me-1"></i> Quick Seed
+                </button>
+              </div>
+              <div class="card-body">
+                <form id="adm-enroll-form" onsubmit="handleAdminEnroll(event)">
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold">Student Full Name *</label>
+                    <input type="text" id="adm-reg-name" class="form-control form-control-sm" placeholder="e.g. Clyde Magnaye" required>
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold">Student ID *</label>
+                      <input type="text" id="adm-reg-id" class="form-control form-control-sm" placeholder="2024-00101" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold">RFID UID *</label>
+                      <input type="text" id="adm-reg-rfid" class="form-control form-control-sm font-monospace" placeholder="E3:4A:9B:1C" required>
+                    </div>
+                  </div>
+                  <div class="row g-2 mb-3">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold">Course</label>
+                      <input type="text" id="adm-reg-course" class="form-control form-control-sm" placeholder="BSIT">
+                    </div>
+                    <div class="col-3">
+                      <label class="form-label small fw-semibold">Year</label>
+                      <select id="adm-reg-year" class="form-select form-select-sm">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3" selected>3</option>
+                        <option value="4">4</option>
+                      </select>
+                    </div>
+                    <div class="col-3">
+                      <label class="form-label small fw-semibold">Sec</label>
+                      <input type="text" id="adm-reg-sec" class="form-control form-control-sm" placeholder="3A">
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                    <i class="fas fa-check me-1"></i> Save Student to Supabase
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-3">
+              <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-users text-primary me-2"></i>Enrolled Students in Database (<span id="adm-student-count">0</span>)</span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="loadAdminStudents()">
+                  <i class="fas fa-rotate"></i>
+                </button>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                      <tr>
+                        <th>Name</th>
+                        <th>Student ID</th>
+                        <th>RFID UID</th>
+                        <th>Course &amp; Section</th>
+                        <th class="text-end">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adm-students-tbody">
+                      <tr><td colspan="5" class="text-center py-4 text-muted">Loading students...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Tab 3: Attendance Stream -->
+      <div id="adm-tab-logs" class="d-none">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-stream text-primary me-2"></i>System Attendance Stream</span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadAdminLogs()">
+              <i class="fas fa-rotate"></i> Refresh
+            </button>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Room</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="adm-logs-tbody">
+                  <tr><td colspan="5" class="text-center py-4 text-muted">Loading logs...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: MANUAL ATTENDANCE OVERRIDE                            -->
+  <!-- ============================================================ -->
+  <div class="modal fade" id="overrideModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold"><i class="fas fa-edit text-primary me-2"></i>Manual Attendance Override</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="override-form" onsubmit="submitInstructorOverride(event)">
+          <div class="modal-body">
+            <input type="hidden" id="override-log-id">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Student</label>
+              <input type="text" id="override-student-name" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">New Attendance Status *</label>
+              <select id="override-status" class="form-select form-select-sm" required>
+                <option value="present">Present</option>
+                <option value="late">Late</option>
+                <!-- QoL feature: Absent now supported and verified -->
+                <option value="absent">Absent</option>
+                <option value="excused">Excused</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Reason for Override *</label>
+              <textarea id="override-reason" class="form-control form-control-sm" rows="3" placeholder="e.g. Verified absent / Scanner misread / Doctor's excuse" required></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm fw-bold">Save Override</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Axios (Laravel API Client standard) & Bootstrap 5 Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Main Frontend App Logic -->
+  <script src="js/app.js"></script>
+</body>
+</html>
