@@ -1,0 +1,279 @@
+<div id="screen-instructor" class="min-vh-100">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm no-print">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand fw-bold" href="#" onclick="showInstructorTab('analytics')">
+        <i class="fas fa-chalkboard-user me-2"></i>Instructor Portal
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-inst">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav-inst">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" id="tablink-inst-analytics" href="#" onclick="showInstructorTab('analytics')">
+              <i class="fas fa-chart-pie me-1"></i> Daily Analytics
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tablink-inst-attendance" href="#" onclick="showInstructorTab('attendance')">
+              <i class="fas fa-table-list me-1"></i> Live Attendance &amp; Overrides
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tablink-inst-export" href="#" onclick="showInstructorTab('export')">
+              <i class="fas fa-file-export me-1"></i> Export Attendance Sheet
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tablink-inst-leaves" href="#" onclick="showInstructorTab('leaves')">
+              <i class="fas fa-inbox me-1"></i> Student Leave Requests
+            </a>
+          </li>
+        </ul>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-white text-primary px-3 py-2 fw-semibold">
+            👨‍🏫 Faculty Member
+          </span>
+          <button class="btn btn-outline-light btn-sm" onclick="logout()">
+            <i class="fas fa-arrow-right-from-bracket me-1"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container-fluid px-4 py-4">
+    <div id="instructor-alert-box" class="no-print"></div>
+
+    <!-- Instructor Tab 1: Daily Analytics (QoL feature) -->
+    <div id="inst-tab-analytics">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h4 class="fw-bold mb-1">Classroom Attendance Analytics</h4>
+          <p class="text-muted small mb-0">Overview of student presence, late entries, and absences for the chosen day.</p>
+        </div>
+        <!-- Filter by Day -->
+        <div class="d-flex align-items-center gap-2">
+          <label class="small fw-semibold text-muted" for="inst-analytics-date">Date:</label>
+          <input type="date" id="inst-analytics-date" class="form-control form-control-sm" onchange="loadInstructorAnalytics()">
+          <button class="btn btn-primary btn-sm" onclick="loadInstructorAnalytics()">
+            <i class="fas fa-filter me-1"></i> Filter
+          </button>
+        </div>
+      </div>
+
+      <!-- Big Highlight Ratio Box (e.g. 28/30 Students) -->
+      <div class="card shadow-sm border-0 rounded-4 mb-4 bg-primary text-white p-4">
+        <div class="row align-items-center">
+          <div class="col-md-7">
+            <span class="badge bg-white text-primary text-uppercase px-3 py-2 fw-bold mb-2">Daily Presence Ratio</span>
+            <h1 class="display-5 fw-bold mb-1" id="inst-ratio-text">0 / 0 Students</h1>
+            <p class="mb-0 opacity-75 fs-6" id="inst-ratio-sub">Calculating attendance rate for selected date...</p>
+          </div>
+          <div class="col-md-5 mt-3 mt-md-0">
+            <div class="progress" style="height: 24px; border-radius: 12px; background-color: rgba(255,255,255,0.25);">
+              <div id="inst-ratio-bar" class="progress-bar bg-success fw-bold" role="progressbar" style="width: 0%">0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="row g-3">
+        <div class="col-lg-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Total Enrolled</span>
+              <h3 class="fw-bold mb-0 text-dark" id="inst-stat-enrolled">0</h3>
+              <small class="text-muted">Total class roster</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Present / On Time</span>
+              <h3 class="fw-bold mb-0 text-success" id="inst-stat-present">0</h3>
+              <small class="text-muted">Scanned on time</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Late</span>
+              <h3 class="fw-bold mb-0 text-warning" id="inst-stat-late">0</h3>
+              <small class="text-muted">After grace period</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Absent / Unscanned</span>
+              <h3 class="fw-bold mb-0 text-danger" id="inst-stat-absent">0</h3>
+              <small class="text-muted">Unrecorded or excused</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructor Tab 2: Live Attendance & Manual Overrides -->
+    <div id="inst-tab-attendance" class="d-none">
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-list-check text-primary me-2"></i>Classroom Attendance Stream</span>
+          <div class="d-flex gap-2">
+            <select id="inst-room-filter" class="form-select form-select-sm" onchange="loadInstructorAttendance()">
+              <option value="">All Classrooms</option>
+            </select>
+            <button class="btn btn-outline-primary btn-sm" onclick="loadInstructorAttendance()">
+              <i class="fas fa-rotate"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height: 540px; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light small">
+                <tr>
+                  <th>Student Name</th>
+                  <th>Student ID</th>
+                  <th>Room</th>
+                  <th>Status</th>
+                  <th>Timestamp</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody id="inst-attendance-tbody">
+                <tr><td colspan="6" class="text-center py-4 text-muted">Loading logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructor Tab 3: Export Attendance Sheet (QoL feature) -->
+    <div id="inst-tab-export" class="d-none">
+      <div class="card shadow-sm border-0 rounded-3 mb-4 no-print">
+        <div class="card-header bg-white py-3 fw-bold">
+          <i class="fas fa-file-export text-success me-2"></i>Generate &amp; Export Attendance Sheet
+        </div>
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Attendance Date *</label>
+              <input type="date" id="export-date" class="form-control form-control-sm" onchange="loadExportSheetData()">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Room / Class</label>
+              <select id="export-room" class="form-select form-select-sm" onchange="loadExportSheetData()">
+                <option value="">All Classrooms</option>
+              </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+              <button class="btn btn-success btn-sm flex-fill fw-bold" onclick="downloadAttendanceCSV()">
+                <i class="fas fa-file-csv me-1"></i> Download CSV
+              </button>
+              <button class="btn btn-dark btn-sm flex-fill fw-bold" onclick="printAttendanceSheet()">
+                <i class="fas fa-print me-1"></i> Print Sheet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Printable Area -->
+      <div id="printable-area" class="card shadow-sm border-0 rounded-3 p-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <div>
+            <h4 class="fw-bold mb-0">Official Classroom Attendance Record</h4>
+            <p class="text-muted small mb-0">IoT Attendance Monitoring System — Faculty Report</p>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-secondary mb-1">Generated: <span id="export-sheet-gen-date">-</span></span>
+            <div class="small fw-semibold text-muted">Date: <span id="export-sheet-target-date">-</span></div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle mb-0" id="export-table">
+            <thead class="table-light small">
+              <tr>
+                <th style="width: 50px;">#</th>
+                <th>Student ID</th>
+                <th>Student Full Name</th>
+                <th>Course &amp; Section</th>
+                <th>Room</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="export-sheet-tbody">
+              <tr><td colspan="7" class="text-center py-4 text-muted">Select date above to generate sheet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructor Tab 4: Student Leave Requests Queue -->
+    <div id="inst-tab-leaves" class="d-none">
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-inbox text-warning me-2"></i>Pending Excuse / Leave Requests</span>
+          <button class="btn btn-outline-secondary btn-sm" onclick="loadInstructorLeaves()">
+            <i class="fas fa-rotate"></i> Refresh
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <div id="inst-leaves-list" class="list-group list-group-flush">
+            <div class="p-4 text-center text-muted small">Loading leave requests...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL: MANUAL ATTENDANCE OVERRIDE -->
+<div class="modal fade" id="overrideModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold"><i class="fas fa-edit text-primary me-2"></i>Manual Attendance Override</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="override-form" onsubmit="submitInstructorOverride(event)">
+        <div class="modal-body">
+          <input type="hidden" id="override-log-id">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Student</label>
+            <input type="text" id="override-student-name" class="form-control form-control-sm" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">New Attendance Status *</label>
+            <select id="override-status" class="form-select form-select-sm" required>
+              <option value="present">Present</option>
+              <option value="late">Late</option>
+              <!-- QoL feature: Absent now supported and verified -->
+              <option value="absent">Absent</option>
+              <option value="excused">Excused</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Reason for Override *</label>
+            <textarea id="override-reason" class="form-control form-control-sm" rows="3" placeholder="e.g. Verified absent / Scanner misread / Doctor's excuse" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm fw-bold">Save Override</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

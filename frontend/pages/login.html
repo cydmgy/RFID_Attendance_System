@@ -1,0 +1,54 @@
+<div id="screen-login" class="min-vh-100 d-flex align-items-center justify-content-center py-5">
+  <div class="card shadow-lg border-0 rounded-4" style="max-width: 480px; width: 92%;">
+    <div class="card-body p-4 p-sm-5 text-center">
+      
+      <div class="mb-3 d-inline-flex p-3 bg-primary bg-opacity-10 text-primary rounded-circle">
+        <i class="fas fa-microchip fs-1"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-1">IoT Attendance System</h3>
+      <p class="text-muted small mb-4">Door-mounted RFID Gateway &amp; Supabase Analytics</p>
+      
+      <div class="alert alert-success py-2 small d-flex align-items-center justify-content-center gap-2 mb-4">
+        <i class="fas fa-check-circle"></i> Backend &amp; Supabase Database Online
+      </div>
+
+      <p class="text-secondary small fw-semibold text-uppercase tracking-wider mb-3">Choose Your Portal to Log In</p>
+
+      <div class="d-grid gap-3">
+        <button class="btn btn-outline-primary p-3 text-start d-flex align-items-center justify-content-between rounded-3" onclick="loginAs('student')">
+          <div class="d-flex align-items-center gap-3">
+            <span class="fs-3">👨‍🎓</span>
+            <div>
+              <strong class="d-block text-dark">Student Portal</strong>
+              <small class="text-muted">Clyde Magnaye (ID: 2024-00101)</small>
+            </div>
+          </div>
+          <i class="fas fa-arrow-right text-primary"></i>
+        </button>
+
+        <button class="btn btn-outline-warning p-3 text-start d-flex align-items-center justify-content-between rounded-3" onclick="loginAs('instructor')">
+          <div class="d-flex align-items-center gap-3">
+            <span class="fs-3">👨‍🏫</span>
+            <div>
+              <strong class="d-block text-dark">Instructor Portal</strong>
+              <small class="text-muted">Faculty &amp; Attendance Analytics</small>
+            </div>
+          </div>
+          <i class="fas fa-arrow-right text-warning"></i>
+        </button>
+
+        <button class="btn btn-outline-dark p-3 text-start d-flex align-items-center justify-content-between rounded-3" onclick="loginAs('admin')">
+          <div class="d-flex align-items-center gap-3">
+            <span class="fs-3">🛡️</span>
+            <div>
+              <strong class="d-block text-dark">Administrator Portal</strong>
+              <small class="text-muted">Hardware Scanner &amp; Student Enrollment</small>
+            </div>
+          </div>
+          <i class="fas fa-arrow-right text-dark"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

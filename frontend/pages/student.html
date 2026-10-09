@@ -1,0 +1,205 @@
+<div id="screen-student" class="min-vh-100">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top shadow-sm">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand fw-bold" href="#" onclick="showStudentTab('overview')">
+        <i class="fas fa-graduation-cap me-2"></i>Student Portal
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-student">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav-student">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" id="tablink-std-overview" href="#" onclick="showStudentTab('overview')">
+              <i class="fas fa-gauge-high me-1"></i> Overview
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tablink-std-logs" href="#" onclick="showStudentTab('logs')">
+              <i class="fas fa-history me-1"></i> My Attendance History
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tablink-std-leave" href="#" onclick="showStudentTab('leave')">
+              <i class="fas fa-file-pen me-1"></i> File Excuse / Leave
+            </a>
+          </li>
+        </ul>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-white text-success px-3 py-2 fw-semibold" id="student-nav-name">
+            Clyde Magnaye (3A)
+          </span>
+          <button class="btn btn-outline-light btn-sm" onclick="logout()">
+            <i class="fas fa-arrow-right-from-bracket me-1"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div id="student-alert-box"></div>
+
+    <!-- Student Tab: Overview -->
+    <div id="std-tab-overview">
+      <!-- KPI Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Total Days Recorded</span>
+              <h3 class="fw-bold mb-0 text-primary" id="std-stat-total">0</h3>
+              <small class="text-muted">Total check-ins</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Present Scans</span>
+              <h3 class="fw-bold mb-0 text-success" id="std-stat-present">0</h3>
+              <small class="text-muted">On-time taps</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Absences / Excuses</span>
+              <!-- QoL feature: Absent count for Student dashboard -->
+              <h3 class="fw-bold mb-0 text-danger" id="std-stat-absent">0</h3>
+              <small class="text-danger fw-semibold">Recorded absences</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <span class="text-muted small fw-semibold">Attendance Rate</span>
+              <h3 class="fw-bold mb-0 text-info" id="std-stat-rate">100%</h3>
+              <small class="text-muted">Class presence</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Profile Card -->
+      <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-white py-3 fw-bold">
+          <i class="fas fa-id-card text-success me-2"></i>My Registered Student Information
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6 mb-2">
+              <span class="text-muted small d-block">Full Name:</span>
+              <strong class="fs-5" id="std-card-name">Clyde Magnaye</strong>
+            </div>
+            <div class="col-sm-6 mb-2">
+              <span class="text-muted small d-block">Student ID No:</span>
+              <code class="fs-6" id="std-card-id">2024-00101</code>
+            </div>
+            <div class="col-sm-6 mb-2">
+              <span class="text-muted small d-block">Course &amp; Section:</span>
+              <span id="std-card-course">BS Information Technology - Year 3 (3A)</span>
+            </div>
+            <div class="col-sm-6 mb-2">
+              <span class="text-muted small d-block">Assigned RFID Card UID:</span>
+              <span class="badge bg-dark font-monospace fs-6" id="std-card-rfid">E3:4A:9B:1C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Tab: My Attendance History -->
+    <div id="std-tab-logs" class="d-none">
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-history text-success me-2"></i>My Attendance Logs</span>
+          <button class="btn btn-outline-secondary btn-sm" onclick="loadStudentPortalData()">
+            <i class="fas fa-rotate"></i> Refresh
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light small">
+                <tr>
+                  <th>Date &amp; Time</th>
+                  <th>Classroom / Room</th>
+                  <th>Attendance Status</th>
+                  <th>RFID UID</th>
+                </tr>
+              </thead>
+              <tbody id="std-logs-table-body">
+                <tr><td colspan="4" class="text-center py-4 text-muted">Loading logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Tab: File Leave / Excuse Request -->
+    <div id="std-tab-leave" class="d-none">
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 fw-bold">
+              <i class="fas fa-file-signature text-warning me-2"></i>File Excuse / Leave Request
+            </div>
+            <div class="card-body">
+              <form id="std-leave-form" onsubmit="submitStudentLeave(event)">
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Subject *</label>
+                  <select id="std-leave-subject" class="form-select form-select-sm" required>
+                    <option value="">Loading subjects...</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Absence Date *</label>
+                  <!-- QoL feature: min attribute prevents past date selection -->
+                  <input type="date" id="std-leave-date" class="form-control form-control-sm" required>
+                  <div class="form-text small text-muted">Absence date cannot be earlier than today.</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Reason for Absence *</label>
+                  <textarea id="std-leave-reason" class="form-control form-control-sm" rows="3" placeholder="Provide medical reason or official excuse..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                  <i class="fas fa-paper-plane me-1"></i> Submit Excuse Request
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 fw-bold">
+              <i class="fas fa-clipboard-list text-primary me-2"></i>My Leave Requests Status
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light small">
+                    <tr>
+                      <th>Subject</th>
+                      <th>Absence Date</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="std-leaves-status-tbody">
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No requests filed.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
